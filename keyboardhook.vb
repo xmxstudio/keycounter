@@ -1,3 +1,4 @@
+
 Public Class KeyboardHook
 
     <DllImport("User32.dll", CharSet:=CharSet.Auto, CallingConvention:=CallingConvention.StdCall)> Private Overloads Shared Function SetWindowsHookEx(ByVal idHook As Integer, ByVal HookProc As KBDLLHookProc, ByVal hInstance As IntPtr, ByVal wParam As Integer) As Integer
@@ -24,7 +25,7 @@ Public Class KeyboardHook
         LLKHF_UP = &H80
     End Enum
 
-    Public Shared Event KeyDown(ByVal Key As Keys)
+    Public Shared Event KeyDown(ByVal Key As Keys, is10keyEnter As Boolean)
     Public Shared Event KeyUp(ByVal Key As Keys)
 
     Private Const WH_KEYBOARD_LL As Integer = 13
@@ -44,7 +45,12 @@ Public Class KeyboardHook
             Dim struct As KBDLLHOOKSTRUCT
             Select Case wParam
                 Case WM_KEYDOWN, WM_SYSKEYDOWN
-                    RaiseEvent KeyDown(CType(CType(Marshal.PtrToStructure(lParam, struct.GetType()), KBDLLHOOKSTRUCT).vkCode, Keys))
+                    If CType(Marshal.PtrToStructure(lParam, struct.GetType()), KBDLLHOOKSTRUCT).flags.ToString = "LLKHF_EXTENDED" Then
+                        RaiseEvent KeyDown(CType(CType(Marshal.PtrToStructure(lParam, struct.GetType()), KBDLLHOOKSTRUCT).vkCode, Keys), True)
+                    Else
+                        RaiseEvent KeyDown(CType(CType(Marshal.PtrToStructure(lParam, struct.GetType()), KBDLLHOOKSTRUCT).vkCode, Keys), False)
+                    End If
+
                 Case WM_KEYUP, WM_SYSKEYUP
                     RaiseEvent KeyUp(CType(CType(Marshal.PtrToStructure(lParam, struct.GetType()), KBDLLHOOKSTRUCT).vkCode, Keys))
             End Select
